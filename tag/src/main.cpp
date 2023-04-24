@@ -15,19 +15,27 @@ const uint8_t PIN_RST = 27; // reset pin
 const uint8_t PIN_IRQ = 34; // irq pin
 const uint8_t PIN_SS = 4;   // spi select pin
 
+uint8_t new13 = 0, new14 = 0;
+float dist13 = 0, dist14 = 0;
+
 void newRange()
 {
+  int device = DW1000Ranging.getDistantDevice()->getShortAddress();
   float dist = DW1000Ranging.getDistantDevice()->getRange();
+  DW1000Ranging.getDistantDevice()->getRXPower();
 
   if (dist >= 0 && dist <= 25)
   {
-    Serial.print("$DIST,");
-    Serial.print(DW1000Ranging.getDistantDevice()->getShortAddress(), HEX);
-    Serial.print(",");
-    Serial.print(DW1000Ranging.getDistantDevice()->getRXPower());
-    Serial.print(",");
-    Serial.print(dist, 3);
-    Serial.println(",*");
+    if (device == 0x1313)
+    {
+      dist13 = dist;
+      new13 = 1;
+    }
+    else if (device == 0x1314)
+    {
+      dist14 = dist;
+      new14 = 1;
+    }
   }
 }
 
@@ -62,4 +70,15 @@ void setup()
 void loop()
 {
   DW1000Ranging.loop();
+
+  if (new13 && new14)
+  {
+    Serial.print("$DIST,");
+    Serial.print(dist13, 3);
+    Serial.print(",");
+    Serial.print(dist14, 3);
+    Serial.println(",*");
+
+    new13 = new14 = 0;
+  }
 }
